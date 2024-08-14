@@ -44,9 +44,10 @@ function startDFU({
   deviceName = null,
   filePath,
   alternativeAdvertisingNameEnabled = true, //iOS only
-  packetReceiptNotificationParameter = 12,
-  retries = 3, // Android only
-  maxMtu = 23, // Android only
+  packetReceiptNotificationParameter = 0,
+  retries = null, // Android only
+  maxMtu = null, // Android only
+  packetsReceiptNotificationsEnabled = null, // Android only
 }) {
   if (deviceAddress == undefined) {
     return rejectPromise("No deviceAddress defined");
@@ -72,6 +73,7 @@ function startDFU({
       {
         retries,
         maxMtu,
+        packetsReceiptNotificationsEnabled
       }
     );
   } else {

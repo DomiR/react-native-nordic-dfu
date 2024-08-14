@@ -42,24 +42,33 @@ public class RNNordicDfuModule extends ReactContextBaseJavaModule implements Lif
         final DfuServiceInitiator starter = new DfuServiceInitiator(address)
                 .setKeepBond(false);
 
-        if (options.hasKey("retries")) {
+        if (options.hasKey("retries") && !options.isNull("retries")) {
           int retries = options.getInt("retries");
           starter.setNumberOfRetries(retries);
         }
 
-        if (options.hasKey("maxMtu")) {
+        if (options.hasKey("maxMtu") && !options.isNull("maxMtu")) {
           int mtu = options.getInt("maxMtu");
           starter.setMtu(mtu);
         }
+
         if (name != null) {
             starter.setDeviceName(name);
         }
-          // mimic behavior of iOSDFULibrary when packetReceiptNotificationParameter is set to `0` - see: https://github.com/NordicSemiconductor/IOS-Pods-DFU-Library/blob/master/iOSDFULibrary/Classes/Implementation/DFUServiceInitiator.swift#L115
-        if (packetReceiptNotificationParameter > 0) {
-          starter.setPacketsReceiptNotificationsValue(packetReceiptNotificationParameter);
-        } else {
-          starter.setPacketsReceiptNotificationsValue(1);
+
+        if (options.hasKey("packetsReceiptNotificationsEnabled") && !options.isNull("packetsReceiptNotificationsEnabled")) {
+            boolean packetsReceiptNotificationsEnabled = options.getBoolean("packetsReceiptNotificationsEnabled");
+            starter.setPacketsReceiptNotificationsEnabled(packetsReceiptNotificationsEnabled);
         }
+
+        // For DFU bootloaders from SDK 15 and 16 it may be required to add a delay before sending each
+        // data packet. This delay gives the DFU target more time to perpare flash memory, causing less
+        // packets being dropped and more reliable transfer. Detection of packets being lost would cause
+        // automatic switch to PRN = 1, making the DFU very slow (but reliable).
+        starter.setPrepareDataObjectDelay(400L);
+
+        // mimic behavior of iOSDFULibrary when packetReceiptNotificationParameter is set to `0` - see: https://github.com/NordicSemiconductor/IOS-Pods-DFU-Library/blob/master/iOSDFULibrary/Classes/Implementation/DFUServiceInitiator.swift#L115
+        starter.setPacketsReceiptNotificationsValue(packetReceiptNotificationParameter);
         starter.setUnsafeExperimentalButtonlessServiceInSecureDfuEnabled(true);
 
         if (uri.endsWith(".bin") || uri.endsWith(".hex")) {
